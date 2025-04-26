@@ -1,0 +1,26 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Имя пакета должно быть "hexlet-code" для системы тестирования
+name = "hexlet-code"
+version = "0.1.0"
+description = "Page Analyzer project for Hexlet"
+# Укажем минимально поддерживаемую версию Python
+requires-python = ">=3.10"
+# Основные зависимости приложения (остаются как были у тебя)
+dependencies = [
+    "flask>=3.1.0",
+    "gunicorn>=23.0.0",
+    "python-dotenv>=1.1.0",
+]
+
+[project.optional-dependencies]
+# Зависимости для разработки
+# Добавили ruff сюда:
+dev = [
+    "ruff", # Линтер ruff теперь указан как зависимость для разработки
+]
