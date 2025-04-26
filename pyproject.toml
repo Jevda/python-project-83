@@ -10,8 +10,8 @@ name = "hexlet-code"
 version = "0.1.0"
 description = "Page Analyzer project for Hexlet"
 # Укажем минимально поддерживаемую версию Python
-requires-python = ">=3.10.0"
-# Основные зависимости приложения (остаются как были у тебя)
+requires-python = ">=3.10"
+# Основные зависимости приложения
 dependencies = [
     "flask>=3.1.0",
     "gunicorn>=23.0.0",
@@ -20,7 +20,11 @@ dependencies = [
 
 [project.optional-dependencies]
 # Зависимости для разработки
-# Добавили ruff сюда:
 dev = [
-    "ruff", # Линтер ruff теперь указан как зависимость для разработки
+    "ruff",
 ]
+
+# Новая секция для явного указания пакетов для setuptools
+[tool.setuptools.packages.find]
+include = ["page_analyzer*"] # Включаем только пакет page_analyzer
+exclude = ["tests*"]          # Исключаем тесты (на будущее)

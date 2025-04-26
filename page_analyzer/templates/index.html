@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}Анализатор страниц{% endblock %}
+
+{% block content %}
+  <div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+      <h1 class="display-3">Анализатор страниц</h1>
+      <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
+      <hr class="my-4">
+      <form action="/urls" method="post" class="row g-3">
+          <div class="col">
+             <input type="text" name="url" value="" class="form-control form-control-lg" placeholder="https://www.example.com" required>
+          </div>
+          <div class="col-auto">
+             <input type="submit" class="btn btn-primary btn-lg" value="Проверить">
+          </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

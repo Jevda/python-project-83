@@ -1,28 +1,24 @@
 # page_analyzer/app.py
 
 import os
-from flask import Flask
+from flask import Flask, render_template # Добавили render_template
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения из файла .env
-# Это нужно сделать до обращения к переменным через os.getenv()
 load_dotenv()
 
 # Создаем экземпляр Flask-приложения
 app = Flask(__name__)
 
 # Устанавливаем секретный ключ Flask из переменной окружения
-# Ключ необходим для работы сессий и защиты от CSRF-атак
-# Никогда не записывайте секретный ключ прямо в код!
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 # Определяем маршрут для главной страницы ('/')
 @app.route('/')
 def index():
-    # Пока просто возвращаем текстовое сообщение
-    return "Flask App Works!"
+    # Используем render_template для обработки и возврата шаблона index.html
+    return render_template('index.html')
 
-# Добавим проверку, чтобы убедиться, что ключ загрузился (для отладки)
-# В реальном приложении стоит предусмотреть более надежную обработку отсутствия ключа
+# Проверка наличия секретного ключа (остается без изменений)
 if not app.config['SECRET_KEY']:
     raise RuntimeError("SECRET_KEY not set in .env file!")
