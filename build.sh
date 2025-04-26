@@ -14,7 +14,13 @@ uv --version
 
 echo "--- Installing project dependencies using make install (Build Step) ---"
 # Используем нашу команду из Makefile для установки всех зависимостей
-# Она вызовет 'uv sync --all-extras'
 make install
+
+echo "--- Running database migrations (Build Step) ---"
+# Выполняем SQL-скрипт для создания таблиц
+# Команда psql выполнится только если make install завершится успешно (&&)
+# psql подключится к базе данных, используя DATABASE_URL из переменных окружения Render
+# и выполнит команды из файла database.sql
+psql -a -d $DATABASE_URL -f database.sql
 
 echo "--- Build finished ---"
