@@ -1,8 +1,7 @@
 # page_analyzer/db.py
 
 import os
-# import psycopg # Убрали импорт psycopg v3
-import psycopg2 # Добавили импорт psycopg v2
+import psycopg2  # Используем psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,10 +11,8 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 def get_db_connection():
     """Устанавливает соединение с базой данных PostgreSQL."""
     try:
-        # Используем psycopg2.connect
         conn = psycopg2.connect(DATABASE_URL)
         return conn
-    # Используем базовое исключение psycopg2
     except psycopg2.Error as e:
         print(f"Ошибка подключения к базе данных: {e}")
         raise
@@ -26,11 +23,12 @@ def get_url_by_id(url_id):
     conn = get_db_connection()
     url_data = None
     try:
-        # with conn.cursor() as cur: # Стандартный DictCursor в psycopg2 не контекстный менеджер
-        cur = conn.cursor() # Создаем курсор
-        cur.execute("SELECT id, name, created_at FROM urls WHERE id = %s", (url_id,))
+        cur = conn.cursor()  # Создаем курсор
+        # Перенос строки SQL (E501)
+        sql = "SELECT id, name, created_at FROM urls WHERE id = %s"
+        cur.execute(sql, (url_id,))
         url_data = cur.fetchone()
-        cur.close() # Закрываем курсор
+        cur.close()  # Закрываем курсор
     finally:
         if conn:
             conn.close()
@@ -43,7 +41,9 @@ def get_url_by_name(url_name):
     url_data = None
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id, name, created_at FROM urls WHERE name = %s", (url_name,))
+        # Перенос строки SQL (E501)
+        sql = "SELECT id, name, created_at FROM urls WHERE name = %s"
+        cur.execute(sql, (url_name,))
         url_data = cur.fetchone()
         cur.close()
     finally:
@@ -53,20 +53,18 @@ def get_url_by_name(url_name):
 
 
 def insert_url(url_name):
-    """Добавляет новый URL в базу данных, полагаясь на DEFAULT для created_at."""
+    """Добавляет новый URL в базу данных."""
     conn = get_db_connection()
     new_url_data = None
     try:
         cur = conn.cursor()
-        # RETURNING работает и в psycopg2
-        cur.execute(
-            "INSERT INTO urls (name) VALUES (%s) RETURNING id, name, created_at",
-            (url_name,)
-        )
+        # Перенос строки SQL (E501)
+        sql = ("INSERT INTO urls (name) VALUES (%s) "
+               "RETURNING id, name, created_at")
+        cur.execute(sql, (url_name,))
         new_url_data = cur.fetchone()
         conn.commit()
         cur.close()
-    # Используем базовое исключение psycopg2
     except psycopg2.Error as e:
         conn.rollback()
         print(f"Ошибка вставки URL: {e}")
@@ -82,15 +80,16 @@ def get_all_urls():
     urls_list = []
     try:
         cur = conn.cursor()
-        # Запрос с CTE и ROW_NUMBER должен работать так же
-        cur.execute(
-            """
+        # Оставляем SQL как есть для читаемости
+        sql = """
             WITH LatestChecks AS (
                 SELECT
                     url_id,
                     created_at,
                     status_code,
-                    ROW_NUMBER() OVER(PARTITION BY url_id ORDER BY created_at DESC) as rn
+                    ROW_NUMBER() OVER(
+                        PARTITION BY url_id ORDER BY created_at DESC
+                    ) as rn
                 FROM url_checks
             )
             SELECT
@@ -102,7 +101,7 @@ def get_all_urls():
             LEFT JOIN LatestChecks lc ON u.id = lc.url_id AND lc.rn = 1
             ORDER BY u.id DESC;
             """
-        )
+        cur.execute(sql)
         urls_list = cur.fetchall()
         cur.close()
     finally:
@@ -117,17 +116,16 @@ def insert_url_check(url_id, status_code, h1=None, title=None, description=None)
     success = False
     try:
         cur = conn.cursor()
-        cur.execute(
-            """
-            INSERT INTO url_checks (url_id, status_code, h1, title, description)
+        # Переносим SQL на несколько строк (E501)
+        sql = """
+            INSERT INTO url_checks
+                (url_id, status_code, h1, title, description)
             VALUES (%s, %s, %s, %s, %s)
-            """,
-            (url_id, status_code, h1, title, description)
-        )
+            """
+        cur.execute(sql, (url_id, status_code, h1, title, description))
         conn.commit()
         cur.close()
         success = True
-    # Используем базовое исключение psycopg2
     except psycopg2.Error as e:
         conn.rollback()
         print(f"Ошибка вставки проверки URL: {e}")
@@ -138,20 +136,19 @@ def insert_url_check(url_id, status_code, h1=None, title=None, description=None)
 
 
 def get_url_checks(url_id):
-    """Получает все проверки для указанного url_id, сортированные по убыванию ID."""
+    """Получает все проверки для указанного url_id."""
     conn = get_db_connection()
     checks_list = []
     try:
         cur = conn.cursor()
-        cur.execute(
-            """
+        # Переносим SQL на несколько строк (E501)
+        sql = """
             SELECT id, url_id, status_code, h1, title, description, created_at
             FROM url_checks
             WHERE url_id = %s
             ORDER BY id DESC;
-            """,
-            (url_id,)
-        )
+            """
+        cur.execute(sql, (url_id,))
         checks_list = cur.fetchall()
         cur.close()
     finally:

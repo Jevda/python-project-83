@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from flask import (Flask, render_template, url_for, request,
                    flash, redirect, get_flashed_messages, abort, session)
-# import psycopg2 # <-- УДАЛЕНО
+# import psycopg2 # <-- Убедись, что этот импорт тоже удален
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
@@ -54,6 +54,7 @@ def index():
                 session['validation_error'] = True
                 return redirect(url_for('list_urls'))
 
+    # GET запрос
     messages = get_flashed_messages(with_categories=True)
     return render_template('index.html', url_input='', messages=messages)
 
@@ -114,6 +115,7 @@ def add_url_check(id):
     except requests.exceptions.RequestException as e:
         print(f"Ошибка при проверке URL {url_name}: {e}")
         flash('Произошла ошибка при проверке', 'danger')
+        # error_message = str(e) # <-- УДАЛЕНО
 
     # Возвращаем редирект после блока try-except
     return redirect(url_for('show_url', id=id))
