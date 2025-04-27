@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}Сайты{% endblock %}
+
+{% block content %}
+  <h2>Сайты</h2>
+
+  <table class="table table-hover" data-test="urls">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Имя</th>
+        </tr>
+    </thead>
+    <tbody>
+      {% for url_item in urls %}
+      <tr>
+        <td>{{ url_item[0] }}</td> <td><a href="{{ url_for('show_url', id=url_item[0]) }}">{{ url_item[1] }}</a></td> </tr>
+      {% else %}
+      <tr>
+        <td colspan="2">Пока не добавлено ни одного сайта</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

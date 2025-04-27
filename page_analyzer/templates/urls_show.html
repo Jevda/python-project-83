@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{# Используем переменную url, переданную из обработчика show_url #}
+{# url[0]=id, url[1]=name, url[2]=created_at #}
+
+{% block title %}Сайт: {{ url[1] }}{% endblock %}
+
+{% block content %}
+  {# Атрибут data-test="url" нужен для тестов #}
+  <div class="table-responsive" data-test="url">
+    <h2>Сайт: {{ url[1] }}</h2>
+    <table class="table table-bordered table-hover mt-3">
+        <tbody>
+            <tr>
+                <td>ID</td>
+                <td>{{ url[0] }}</td>
+            </tr>
+            <tr>
+                <td>Имя</td>
+                <td>{{ url[1] }}</td>
+            </tr>
+            <tr>
+                <td>Дата создания</td>
+                <td>{{ url[2].strftime('%Y-%m-%d') }}</td> {# Форматируем дату #}
+            </tr>
+        </tbody>
+    </table>
+  </div>
+
+  {# Сюда позже добавим проверки #}
+
+{% endblock %}

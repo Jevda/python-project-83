@@ -5,27 +5,28 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-# Имя пакета должно быть "hexlet-code" для системы тестирования
+# Имя пакета для системы тестирования
 name = "hexlet-code"
 version = "0.1.0"
 description = "Page Analyzer project for Hexlet"
-# Укажем минимально поддерживаемую версию Python
+# Минимально поддерживаемая версия Python
 requires-python = ">=3.10"
 # Основные зависимости приложения
 dependencies = [
     "flask>=3.1.0",
     "gunicorn>=23.0.0",
-    "psycopg[binary]>=3.2.6",
     "python-dotenv>=1.1.0",
+    "psycopg[binary]", # Библиотека для работы с PostgreSQL
+    "validators",      # Библиотека для валидации URL
 ]
 
 [project.optional-dependencies]
 # Зависимости для разработки
 dev = [
-    "ruff",
+    "ruff", # Линтер
 ]
 
-# Новая секция для явного указания пакетов для setuptools
+# Настройка setuptools для явного указания пакетов
 [tool.setuptools.packages.find]
 include = ["page_analyzer*"] # Включаем только пакет page_analyzer
-exclude = ["tests*"]          # Исключаем тесты (на будущее)
+exclude = ["tests*"]          # Исключаем тесты
