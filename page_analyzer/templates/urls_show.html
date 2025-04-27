@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 
-{# Используем переменную url, переданную из обработчика show_url #}
-{# url[0]=id, url[1]=name, url[2]=created_at #}
+{# Переменная 'url' содержит (id, name, created_at) #}
+{# Переменная 'checks' содержит список проверок [(id, url_id, status_code, h1, title, description, created_at), ...] #}
 
 {% block title %}Сайт: {{ url[1] }}{% endblock %}
 
 {% block content %}
-  {# Атрибут data-test="url" нужен для тестов #}
+  {# Информация о сайте #}
   <div class="table-responsive" data-test="url">
     <h2>Сайт: {{ url[1] }}</h2>
     <table class="table table-bordered table-hover mt-3">
@@ -27,6 +27,43 @@
     </table>
   </div>
 
-  {# Сюда позже добавим проверки #}
+  {# Форма для запуска проверки #}
+  <h2 class="mt-5">Проверки</h2>
+  <form method="post" action="{{ url_for('add_url_check', id=url[0]) }}">
+      <input type="submit" class="btn btn-primary" value="Запустить проверку">
+  </form>
+
+  {# Таблица с историей проверок #}
+  {# Атрибут data-test="checks" нужен для тестов #}
+  <table class="table table-bordered table-hover mt-3" data-test="checks">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Код ответа</th> {# Пока будет пусто #}
+        <th>h1</th>        {# Пока будет пусто #}
+        <th>title</th>     {# Пока будет пусто #}
+        <th>description</th> {# Пока будет пусто #}
+        <th>Дата создания</th>
+      </tr>
+    </thead>
+    <tbody>
+      {# Цикл по списку проверок 'checks' #}
+      {% for check in checks %}
+      <tr>
+        <td>{{ check[0] }}</td> {# ID проверки #}
+        <td>{{ check[2] or '' }}</td> {# status_code (индекс 2), выводим '' если NULL #}
+        <td>{{ check[3] or '' }}</td> {# h1 (индекс 3) #}
+        <td>{{ check[4] or '' }}</td> {# title (индекс 4) #}
+        <td>{{ check[5] or '' }}</td> {# description (индекс 5) #}
+        <td>{{ check[6].strftime('%Y-%m-%d %H:%M:%S') }}</td> {# created_at (индекс 6), форматируем #}
+      </tr>
+      {% else %}
+      {# Выводится, если список 'checks' пуст #}
+      <tr>
+        <td colspan="6">Проверок еще не было</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
 {% endblock %}

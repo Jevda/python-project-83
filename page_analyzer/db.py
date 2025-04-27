@@ -3,9 +3,8 @@
 import os
 import psycopg
 from dotenv import load_dotenv
-from datetime import date # Для created_at
+# Импорт datetime/date больше не нужен для вставок
 
-# Загрузка переменных окружения
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -13,13 +12,11 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 def get_db_connection():
     """Устанавливает соединение с базой данных PostgreSQL."""
     try:
-        # Установка соединения по DATABASE_URL
         conn = psycopg.connect(DATABASE_URL)
         return conn
     except psycopg.Error as e:
-        # Обработка ошибок подключения
         print(f"Ошибка подключения к базе данных: {e}")
-        raise # Перевыброс исключения
+        raise
 
 
 def get_url_by_id(url_id):
@@ -27,15 +24,12 @@ def get_url_by_id(url_id):
     conn = get_db_connection()
     url_data = None
     try:
-        # Использование 'with' для автоматического управления курсором
         with conn.cursor() as cur:
             cur.execute("SELECT id, name, created_at FROM urls WHERE id = %s", (url_id,))
-            url_data = cur.fetchone() # Получение одной строки или None
+            url_data = cur.fetchone()
     finally:
-        # Гарантированное закрытие соединения
         if conn:
             conn.close()
-    # Возвращает кортеж (id, name, created_at) или None
     return url_data
 
 
@@ -50,49 +44,98 @@ def get_url_by_name(url_name):
     finally:
         if conn:
             conn.close()
-    # Возвращает кортеж (id, name, created_at) или None
     return url_data
 
 
 def insert_url(url_name):
-    """Добавляет новый URL в базу данных и возвращает его данные."""
+    """Добавляет новый URL в базу данных, полагаясь на DEFAULT для created_at."""
     conn = get_db_connection()
     new_url_data = None
-    today = date.today() # Получение текущей даты
+    # now = datetime.now() # Больше не нужно
     try:
         with conn.cursor() as cur:
-            # Вставка новой записи и получение её данных через RETURNING
+            # Вставляем только name, created_at установится по DEFAULT
+            # По-прежнему используем RETURNING, чтобы получить все данные, включая сгенерированный created_at
             cur.execute(
-                "INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id, name, created_at",
-                (url_name, today)
+                "INSERT INTO urls (name) VALUES (%s) RETURNING id, name, created_at",
+                (url_name,) # Передаем только url_name
             )
             new_url_data = cur.fetchone()
-            conn.commit() # Подтверждение транзакции
+            conn.commit()
     except psycopg.Error as e:
-        # Откат транзакции при ошибке (например, дубликат UNIQUE)
         conn.rollback()
         print(f"Ошибка вставки URL: {e}")
-        # Возвращаем None при ошибке
     finally:
-        # Гарантированное закрытие соединения
         if conn:
             conn.close()
-    # Возвращает кортеж (id, name, created_at) или None при ошибке
     return new_url_data
 
 
 def get_all_urls():
-    """Получает все записи из таблицы urls, сортированные по ID."""
+    """Получает все URL вместе с датой последней проверки."""
     conn = get_db_connection()
-    urls_data = []
+    urls_list = []
     try:
         with conn.cursor() as cur:
-            # Запрос ID и имени, сортировка по убыванию ID
-            cur.execute("SELECT id, name FROM urls ORDER BY id DESC;")
-            urls_data = cur.fetchall() # Извлечение всех строк
+            cur.execute(
+                """
+                SELECT
+                    urls.id,
+                    urls.name,
+                    MAX(url_checks.created_at) as last_check_date
+                FROM urls
+                LEFT JOIN url_checks ON urls.id = url_checks.url_id
+                GROUP BY urls.id, urls.name
+                ORDER BY urls.id DESC;
+                """
+            )
+            urls_list = cur.fetchall()
     finally:
-        # Гарантированное закрытие соединения
         if conn:
             conn.close()
-    # Возвращает список кортежей [(id, name), ...]
-    return urls_data
+    return urls_list
+
+
+def insert_url_check(url_id):
+    """Добавляет запись о новой проверке, полагаясь на DEFAULT для created_at."""
+    conn = get_db_connection()
+    success = False
+    # now = datetime.now() # Больше не нужно
+    try:
+        with conn.cursor() as cur:
+            # Вставляем только url_id, created_at установится по DEFAULT
+            cur.execute(
+                "INSERT INTO url_checks (url_id) VALUES (%s)",
+                (url_id,) # Передаем только url_id
+            )
+            conn.commit()
+            success = True
+    except psycopg.Error as e:
+        conn.rollback()
+        print(f"Ошибка вставки проверки URL: {e}")
+    finally:
+        if conn:
+            conn.close()
+    return success
+
+
+def get_url_checks(url_id):
+    """Получает все проверки для указанного url_id, сортированные по убыванию ID."""
+    conn = get_db_connection()
+    checks_list = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, url_id, status_code, h1, title, description, created_at
+                FROM url_checks
+                WHERE url_id = %s
+                ORDER BY id DESC;
+                """,
+                (url_id,)
+            )
+            checks_list = cur.fetchall()
+    finally:
+        if conn:
+            conn.close()
+    return checks_list

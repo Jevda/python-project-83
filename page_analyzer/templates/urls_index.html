@@ -10,15 +10,29 @@
       <tr>
         <th>ID</th>
         <th>Имя</th>
-        </tr>
+        <th>Последняя проверка</th> {# Новая колонка #}
+        {# Сюда можно добавить Код ответа последней проверки #}
+      </tr>
     </thead>
     <tbody>
+      {# url_item теперь кортеж (id, name, last_check_date) #}
       {% for url_item in urls %}
       <tr>
-        <td>{{ url_item[0] }}</td> <td><a href="{{ url_for('show_url', id=url_item[0]) }}">{{ url_item[1] }}</a></td> </tr>
+        <td>{{ url_item[0] }}</td> {# ID #}
+        <td><a href="{{ url_for('show_url', id=url_item[0]) }}">{{ url_item[1] }}</a></td> {# Имя #}
+        <td>
+            {# Выводим дату последней проверки, если она есть #}
+            {% if url_item[2] %}
+              {{ url_item[2].strftime('%Y-%m-%d') }} {# last_check_date #}
+            {% else %}
+              {# Выводим пустоту, если проверок не было #}
+            {% endif %}
+        </td>
+        {# Сюда можно добавить Код ответа #}
+      </tr>
       {% else %}
       <tr>
-        <td colspan="2">Пока не добавлено ни одного сайта</td>
+        <td colspan="3">Пока не добавлено ни одного сайта</td> {# Увеличили colspan #}
       </tr>
       {% endfor %}
     </tbody>

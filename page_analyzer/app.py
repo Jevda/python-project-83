@@ -1,25 +1,21 @@
 # page_analyzer/app.py
 
 import os
-import validators # Для валидации URL
+import validators
 from flask import (Flask, render_template, url_for, request,
-                   flash, redirect, get_flashed_messages, abort) # Компоненты Flask
+                   flash, redirect, get_flashed_messages, abort)
 from dotenv import load_dotenv
-from urllib.parse import urlparse # Для нормализации URL
-# 'date' из 'datetime' больше не импортируем здесь
+from urllib.parse import urlparse
 
 # Импорт функций работы с БД
-from .db import get_all_urls, get_url_by_name, insert_url, get_url_by_id
+from .db import (get_all_urls, get_url_by_name, insert_url,
+                   get_url_by_id, insert_url_check, get_url_checks) # get_url_checks теперь будет использоваться
 
-# Загрузка переменных окружения
 load_dotenv()
 
-# Создание экземпляра Flask
 app = Flask(__name__)
-# Установка секретного ключа
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-# Проверка наличия секретного ключа при старте
 if not app.config['SECRET_KEY']:
     raise RuntimeError("SECRET_KEY not set in .env file!")
 
@@ -69,10 +65,39 @@ def list_urls():
     return render_template('urls_index.html', urls=all_urls)
 
 
-# Страница конкретного URL
+# Страница конкретного URL (ОБНОВЛЕНА)
 @app.route('/urls/<int:id>')
 def show_url(id):
+    """Отображает информацию о URL и историю его проверок."""
+    # Получаем данные URL из базы данных по ID
     url_data = get_url_by_id(id)
+
+    # Если URL с таким ID не найден, возвращаем ошибку 404
     if url_data is None:
         abort(404, description="Страница не найдена")
-    return render_template('urls_show.html', url=url_data)
+
+    # === ДОБАВЛЕНО: Получаем список проверок для этого URL ===
+    checks_data = get_url_checks(id)
+
+    # Если найден, рендерим шаблон страницы URL, передавая данные URL и проверок
+    # url_data это кортеж (id, name, created_at)
+    # checks_data это список кортежей [(check_id, url_id, status, h1, ...), (...), ...]
+    return render_template('urls_show.html', url=url_data, checks=checks_data)
+
+
+# Маршрут для запуска проверки
+@app.route('/urls/<int:id>/checks', methods=['POST'])
+def add_url_check(id):
+    """Добавляет запись о новой проверке для URL с указанным ID."""
+    url_item = get_url_by_id(id)
+    if url_item is None:
+        abort(404, description="URL не найден, проверку добавить нельзя")
+
+    success = insert_url_check(id)
+
+    if success:
+        flash('Страница успешно проверена', 'success')
+    else:
+        flash('Произошла ошибка при проверке страницы', 'danger')
+
+    return redirect(url_for('show_url', id=id))
