@@ -1,7 +1,7 @@
 # page_analyzer/db.py
 
 import os
-import psycopg2  # Используем psycopg2
+import psycopg2  # noqa: F401 - Игнорируем ложный F401 от Hexlet Ruff
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,12 +23,11 @@ def get_url_by_id(url_id):
     conn = get_db_connection()
     url_data = None
     try:
-        cur = conn.cursor()  # Создаем курсор
-        # Перенос строки SQL (E501)
+        cur = conn.cursor()
         sql = "SELECT id, name, created_at FROM urls WHERE id = %s"
         cur.execute(sql, (url_id,))
         url_data = cur.fetchone()
-        cur.close()  # Закрываем курсор
+        cur.close()
     finally:
         if conn:
             conn.close()
@@ -41,7 +40,6 @@ def get_url_by_name(url_name):
     url_data = None
     try:
         cur = conn.cursor()
-        # Перенос строки SQL (E501)
         sql = "SELECT id, name, created_at FROM urls WHERE name = %s"
         cur.execute(sql, (url_name,))
         url_data = cur.fetchone()
@@ -58,7 +56,6 @@ def insert_url(url_name):
     new_url_data = None
     try:
         cur = conn.cursor()
-        # Перенос строки SQL (E501)
         sql = ("INSERT INTO urls (name) VALUES (%s) "
                "RETURNING id, name, created_at")
         cur.execute(sql, (url_name,))
@@ -75,12 +72,11 @@ def insert_url(url_name):
 
 
 def get_all_urls():
-    """Получает все URL вместе с датой и кодом ответа последней проверки."""
+    """Получает все URL с датой и кодом ответа последней проверки."""
     conn = get_db_connection()
     urls_list = []
     try:
         cur = conn.cursor()
-        # Оставляем SQL как есть для читаемости
         sql = """
             WITH LatestChecks AS (
                 SELECT
@@ -110,13 +106,14 @@ def get_all_urls():
     return urls_list
 
 
-def insert_url_check(url_id, status_code, h1=None, title=None, description=None):
+def insert_url_check(url_id, status_code, h1=None, title=None,
+                     description=None):
     """Добавляет запись о новой проверке со всеми данными."""
+    # Перенесли длинную строку определения функции (E501)
     conn = get_db_connection()
     success = False
     try:
         cur = conn.cursor()
-        # Переносим SQL на несколько строк (E501)
         sql = """
             INSERT INTO url_checks
                 (url_id, status_code, h1, title, description)
@@ -141,7 +138,6 @@ def get_url_checks(url_id):
     checks_list = []
     try:
         cur = conn.cursor()
-        # Переносим SQL на несколько строк (E501)
         sql = """
             SELECT id, url_id, status_code, h1, title, description, created_at
             FROM url_checks
