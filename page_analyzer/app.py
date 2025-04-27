@@ -16,7 +16,6 @@ from flask import (
     session,
 )
 
-# import psycopg2 # <-- Убедись, что этот импорт тоже удален
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
@@ -129,7 +128,6 @@ def add_url_check(id):
     except requests.exceptions.RequestException as e:
         print(f"Ошибка при проверке URL {url_name}: {e}")
         flash("Произошла ошибка при проверке", "danger")
-        # error_message = str(e) # <-- УДАЛЕНО
 
     # Возвращаем редирект после блока try-except
     return redirect(url_for("show_url", id=id))

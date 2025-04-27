@@ -11,18 +11,20 @@
     <h2 class="mt-5 mb-3">Сайт: {{ url[1] }}</h2>
     <table class="table table-bordered table-hover">
         <tbody>
+            {# --- Начало исправлений --- #}
             <tr>
-                <td>ID</td>
+                <th scope="row">ID</th> {# Заменили td на th scope="row" #}
                 <td>{{ url[0] }}</td>
             </tr>
             <tr>
-                <td>Имя</td>
+                <th scope="row">Имя</th> {# Заменили td на th scope="row" #}
                 <td>{{ url[1] }}</td>
             </tr>
             <tr>
-                <td>Дата создания</td>
-                <td>{{ url[2].strftime('%Y-%m-%d') }}</td> {# Форматируем дату #}
+                <th scope="row">Дата создания</th> {# Заменили td на th scope="row" #}
+                <td>{{ url[2].strftime('%Y-%m-%d') }}</td>
             </tr>
+            {# --- Конец исправлений --- #}
         </tbody>
     </table>
   </div>
@@ -35,7 +37,7 @@
 
   {# Таблица с историей проверок #}
   <table class="table table-bordered table-hover mt-3" data-test="checks">
-    <thead>
+    <thead> {# <-- У этой таблицы заголовки были правильные (th в thead) #}
       <tr>
         <th>ID</th>
         <th>Код ответа</th>
@@ -46,19 +48,16 @@
       </tr>
     </thead>
     <tbody>
-      {# Цикл по списку проверок 'checks' #}
       {% for check in checks %}
       <tr>
-        <td>{{ check[0] }}</td> {# ID проверки #}
-        <td>{{ check[2] or '' }}</td> {# status_code (индекс 2) #}
-        {# Отображаем извлеченные SEO-данные, если они есть #}
-        <td>{{ check[3] or '' }}</td> {# h1 (индекс 3) #}
-        <td>{{ check[4] or '' }}</td> {# title (индекс 4) #}
-        <td>{{ check[5] or '' }}</td> {# description (индекс 5) #}
-        <td>{{ check[6].strftime('%Y-%m-%d %H:%M:%S') }}</td> {# created_at (индекс 6) #}
+        <td>{{ check[0] }}</td>
+        <td>{{ check[2] or '' }}</td>
+        <td>{{ check[3] or '' }}</td>
+        <td>{{ check[4] or '' }}</td>
+        <td>{{ check[5] or '' }}</td>
+        <td>{{ check[6].strftime('%Y-%m-%d %H:%M:%S') }}</td>
       </tr>
       {% else %}
-      {# Выводится, если список 'checks' пуст #}
       <tr>
         <td colspan="6">Проверок еще не было</td>
       </tr>
