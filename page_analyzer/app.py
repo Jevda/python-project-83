@@ -1,21 +1,25 @@
 # page_analyzer/app.py
 
 import os
-import validators
+import validators # Для валидации URL
 from flask import (Flask, render_template, url_for, request,
-                   flash, redirect, get_flashed_messages, abort) # Добавили abort
+                   flash, redirect, get_flashed_messages, abort) # Компоненты Flask
 from dotenv import load_dotenv
-from urllib.parse import urlparse
-from datetime import date
+from urllib.parse import urlparse # Для нормализации URL
+# 'date' из 'datetime' больше не импортируем здесь
 
-# Импортируем функции работы с БД
-from .db import get_all_urls, get_url_by_name, insert_url, get_url_by_id # Добавили get_url_by_id
+# Импорт функций работы с БД
+from .db import get_all_urls, get_url_by_name, insert_url, get_url_by_id
 
+# Загрузка переменных окружения
 load_dotenv()
 
+# Создание экземпляра Flask
 app = Flask(__name__)
+# Установка секретного ключа
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
+# Проверка наличия секретного ключа при старте
 if not app.config['SECRET_KEY']:
     raise RuntimeError("SECRET_KEY not set in .env file!")
 
@@ -43,12 +47,12 @@ def index():
 
         if existing_url:
             flash('Страница уже существует', 'info')
-            return redirect(url_for('show_url', id=existing_url[0])) # Редирект на существующую
+            return redirect(url_for('show_url', id=existing_url[0]))
         else:
             new_url = insert_url(normalized_url)
             if new_url:
                 flash('Страница успешно добавлена', 'success')
-                return redirect(url_for('show_url', id=new_url[0])) # Редирект на новую
+                return redirect(url_for('show_url', id=new_url[0]))
             else:
                 flash('Произошла ошибка при добавлении URL', 'danger')
                 messages = get_flashed_messages(with_categories=True)
@@ -61,23 +65,14 @@ def index():
 # Страница списка сайтов
 @app.route('/urls')
 def list_urls():
-    """Отображает список всех добавленных URL."""
     all_urls = get_all_urls()
     return render_template('urls_index.html', urls=all_urls)
 
 
-# === НОВЫЙ МАРШРУТ И ОБРАБОТЧИК ===
+# Страница конкретного URL
 @app.route('/urls/<int:id>')
 def show_url(id):
-    """Отображает информацию о конкретном URL по его ID."""
-    # Получаем данные URL из базы данных по ID
     url_data = get_url_by_id(id)
-
-    # Если URL с таким ID не найден, возвращаем ошибку 404
     if url_data is None:
         abort(404, description="Страница не найдена")
-
-    # Если найден, рендерим шаблон страницы URL, передавая данные
-    # url_data это кортеж (id, name, created_at)
     return render_template('urls_show.html', url=url_data)
-# === КОНЕЦ НОВОГО МАРШРУТА ===
