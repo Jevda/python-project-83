@@ -2,7 +2,6 @@
 
 name: Python Project CI
 
-# Запускать при push или pull request в ветку main
 on:
   push:
     branches: [ main ]
@@ -10,38 +9,37 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-lint:
-    # Использовать последнюю стабильную Ubuntu
+  build-and-lint-and-scan: # Можно переименовать job для ясности
     runs-on: ubuntu-latest
 
     steps:
-      # Шаг 1: Получить код из репозитория
       - name: Checkout code
         uses: actions/checkout@v4
+        # Нужно для SonarCloud, чтобы он мог получить историю коммитов
+        with:
+          fetch-depth: 0 # Важно для анализа истории
 
-      # Шаг 2: Установить Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          # Используй версию Python, указанную в requires-python в pyproject.toml
-          python-version: '3.11' # Или '3.10', '3.12' и т.д.
+          python-version: '3.11' # Убедись, что версия совпадает
 
-      # Шаг 3: Установить uv
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      # Шаг 4: Добавить uv в PATH для использования в следующих шагах
       - name: Add uv to PATH
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      # Шаг 5: Установить зависимости проекта (используем Makefile)
       - name: Install dependencies
         run: make install
 
-      # Шаг 6: Запустить линтер (используем Makefile)
       - name: Run linter
         run: make lint
 
-      # Здесь позже можно будет добавить запуск тестов
-      # - name: Run tests
-      #   run: make test
+      # === НОВЫЙ ШАГ ===
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # === КОНЕЦ НОВОГО ШАГА ===
