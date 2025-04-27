@@ -5,7 +5,7 @@ import validators
 import requests
 from bs4 import BeautifulSoup
 from flask import (Flask, render_template, url_for, request,
-                   flash, redirect, get_flashed_messages, abort)
+                   flash, redirect, get_flashed_messages, abort, session) # Добавили session
 import psycopg2
 from dotenv import load_dotenv
 from urllib.parse import urlparse
@@ -16,6 +16,7 @@ from .db import (get_all_urls, get_url_by_name, insert_url,
 load_dotenv()
 
 app = Flask(__name__)
+# Секретный ключ КРИТИЧЕН для работы сессий!
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 if not app.config['SECRET_KEY']:
@@ -29,12 +30,12 @@ def index():
     if request.method == 'POST':
         if not validators.url(url_input):
             flash('Некорректный URL', 'danger')
-            # Упрощенный редирект
+            session['validation_error'] = True # Устанавливаем флаг
             return redirect(url_for('list_urls'))
 
         if len(url_input) > 255:
             flash('URL превышает 255 символов', 'danger')
-            # Упрощенный редирект
+            session['validation_error'] = True # Устанавливаем флаг
             return redirect(url_for('list_urls'))
 
         parsed_url = urlparse(url_input)
@@ -50,7 +51,7 @@ def index():
                 return redirect(url_for('show_url', id=new_url[0]))
             else:
                 flash('Произошла ошибка при добавлении URL', 'danger')
-                # Упрощенный редирект при ошибке добавления
+                session['validation_error'] = True # Устанавливаем флаг и здесь?
                 return redirect(url_for('list_urls'))
 
     # GET запрос
@@ -58,14 +59,18 @@ def index():
     return render_template('index.html', url_input='', messages=messages)
 
 
-# Страница списка сайтов (возвращаем к нормальному виду)
+# Страница списка сайтов (ОБНОВЛЕНА для проверки сессии)
 @app.route('/urls')
 def list_urls():
-    # Убрали проверку validation_error и принудительный статус 422
+    # Проверяем и удаляем флаг ошибки валидации из сессии
+    is_error = session.pop('validation_error', None)
+    # Устанавливаем статус код: 422 если флаг был, иначе 200
+    status_code = 422 if is_error else 200
+
     all_urls = get_all_urls()
     messages = get_flashed_messages(with_categories=True)
-    # Возвращаем статус 200 OK по умолчанию
-    return render_template('urls_index.html', urls=all_urls, messages=messages)
+    # Возвращаем шаблон с вычисленным статус кодом
+    return render_template('urls_index.html', urls=all_urls, messages=messages), status_code
 
 
 # Страница конкретного URL
