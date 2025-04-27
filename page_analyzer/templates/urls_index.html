@@ -3,19 +3,19 @@
 {% block title %}Сайты{% endblock %}
 
 {% block content %}
-  <h2>Сайты</h2>
+  <h2 class="mt-5 mb-3">Сайты</h2>
 
   <table class="table table-hover" data-test="urls">
     <thead>
       <tr>
         <th>ID</th>
         <th>Имя</th>
-        <th>Последняя проверка</th> {# Новая колонка #}
-        {# Сюда можно добавить Код ответа последней проверки #}
+        <th>Последняя проверка</th>
+        <th>Код ответа</th> {# Новый заголовок #}
       </tr>
     </thead>
     <tbody>
-      {# url_item теперь кортеж (id, name, last_check_date) #}
+      {# url_item теперь кортеж (id, name, last_check_date, last_check_status_code) #}
       {% for url_item in urls %}
       <tr>
         <td>{{ url_item[0] }}</td> {# ID #}
@@ -24,15 +24,18 @@
             {# Выводим дату последней проверки, если она есть #}
             {% if url_item[2] %}
               {{ url_item[2].strftime('%Y-%m-%d') }} {# last_check_date #}
-            {% else %}
-              {# Выводим пустоту, если проверок не было #}
             {% endif %}
         </td>
-        {# Сюда можно добавить Код ответа #}
+        <td>
+            {# Выводим код ответа последней проверки, если он есть #}
+            {% if url_item[3] is not none %} {# Проверяем, что значение не NULL #}
+              {{ url_item[3] }} {# last_check_status_code #}
+            {% endif %}
+        </td>
       </tr>
       {% else %}
       <tr>
-        <td colspan="3">Пока не добавлено ни одного сайта</td> {# Увеличили colspan #}
+        <td colspan="4">Пока не добавлено ни одного сайта</td> {# Увеличили colspan до 4 #}
       </tr>
       {% endfor %}
     </tbody>

@@ -3,7 +3,7 @@
 import os
 import psycopg
 from dotenv import load_dotenv
-# Импорт datetime/date больше не нужен для вставок
+# datetime больше не импортируем здесь
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -51,14 +51,11 @@ def insert_url(url_name):
     """Добавляет новый URL в базу данных, полагаясь на DEFAULT для created_at."""
     conn = get_db_connection()
     new_url_data = None
-    # now = datetime.now() # Больше не нужно
     try:
         with conn.cursor() as cur:
-            # Вставляем только name, created_at установится по DEFAULT
-            # По-прежнему используем RETURNING, чтобы получить все данные, включая сгенерированный created_at
             cur.execute(
                 "INSERT INTO urls (name) VALUES (%s) RETURNING id, name, created_at",
-                (url_name,) # Передаем только url_name
+                (url_name,)
             )
             new_url_data = cur.fetchone()
             conn.commit()
@@ -71,42 +68,56 @@ def insert_url(url_name):
     return new_url_data
 
 
+# === ИЗМЕНЕННАЯ ФУНКЦИЯ ===
 def get_all_urls():
-    """Получает все URL вместе с датой последней проверки."""
+    """Получает все URL вместе с датой и кодом ответа последней проверки."""
     conn = get_db_connection()
     urls_list = []
     try:
         with conn.cursor() as cur:
+            # Используем CTE и ROW_NUMBER для выбора последней проверки для каждого URL
             cur.execute(
                 """
+                WITH LatestChecks AS (
+                    SELECT
+                        url_id,
+                        created_at,
+                        status_code,
+                        ROW_NUMBER() OVER(PARTITION BY url_id ORDER BY created_at DESC) as rn
+                    FROM url_checks
+                )
                 SELECT
-                    urls.id,
-                    urls.name,
-                    MAX(url_checks.created_at) as last_check_date
-                FROM urls
-                LEFT JOIN url_checks ON urls.id = url_checks.url_id
-                GROUP BY urls.id, urls.name
-                ORDER BY urls.id DESC;
+                    u.id,
+                    u.name,
+                    lc.created_at as last_check_date,
+                    lc.status_code as last_check_status_code
+                FROM urls u
+                LEFT JOIN LatestChecks lc ON u.id = lc.url_id AND lc.rn = 1
+                ORDER BY u.id DESC;
                 """
             )
+            # Результат теперь содержит (id, name, last_check_date, last_check_status_code)
+            # Поля _date и _status_code будут None, если проверок еще не было
             urls_list = cur.fetchall()
     finally:
         if conn:
             conn.close()
     return urls_list
+# === КОНЕЦ ИЗМЕНЕННОЙ ФУНКЦИИ ===
 
 
-def insert_url_check(url_id):
-    """Добавляет запись о новой проверке, полагаясь на DEFAULT для created_at."""
+# === ИЗМЕНЕННАЯ ФУНКЦИЯ ===
+def insert_url_check(url_id, status_code):
+    """Добавляет запись о новой проверке с указанием status_code."""
     conn = get_db_connection()
     success = False
-    # now = datetime.now() # Больше не нужно
+    # now = datetime.now() # Используем DEFAULT CURRENT_TIMESTAMP
     try:
         with conn.cursor() as cur:
-            # Вставляем только url_id, created_at установится по DEFAULT
+            # Вставляем url_id и status_code, created_at установится по DEFAULT
             cur.execute(
-                "INSERT INTO url_checks (url_id) VALUES (%s)",
-                (url_id,) # Передаем только url_id
+                "INSERT INTO url_checks (url_id, status_code) VALUES (%s, %s)",
+                (url_id, status_code)
             )
             conn.commit()
             success = True
@@ -117,6 +128,7 @@ def insert_url_check(url_id):
         if conn:
             conn.close()
     return success
+# === КОНЕЦ ИЗМЕНЕННОЙ ФУНКЦИИ ===
 
 
 def get_url_checks(url_id):

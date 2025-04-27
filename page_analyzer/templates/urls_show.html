@@ -8,8 +8,8 @@
 {% block content %}
   {# Информация о сайте #}
   <div class="table-responsive" data-test="url">
-    <h2>Сайт: {{ url[1] }}</h2>
-    <table class="table table-bordered table-hover mt-3">
+    <h2 class="mt-5 mb-3">Сайт: {{ url[1] }}</h2> {# Добавил отступы к заголовку #}
+    <table class="table table-bordered table-hover"> {# Убрал mt-3, т.к. есть у h2 #}
         <tbody>
             <tr>
                 <td>ID</td>
@@ -28,21 +28,20 @@
   </div>
 
   {# Форма для запуска проверки #}
-  <h2 class="mt-5">Проверки</h2>
+  <h2 class="mt-5 mb-3">Проверки</h2> {# Добавил отступы к заголовку #}
   <form method="post" action="{{ url_for('add_url_check', id=url[0]) }}">
       <input type="submit" class="btn btn-primary" value="Запустить проверку">
   </form>
 
   {# Таблица с историей проверок #}
-  {# Атрибут data-test="checks" нужен для тестов #}
   <table class="table table-bordered table-hover mt-3" data-test="checks">
     <thead>
       <tr>
         <th>ID</th>
-        <th>Код ответа</th> {# Пока будет пусто #}
-        <th>h1</th>        {# Пока будет пусто #}
-        <th>title</th>     {# Пока будет пусто #}
-        <th>description</th> {# Пока будет пусто #}
+        <th>Код ответа</th> {# Заголовок уже есть #}
+        <th>h1</th>
+        <th>title</th>
+        <th>description</th>
         <th>Дата создания</th>
       </tr>
     </thead>
@@ -60,7 +59,7 @@
       {% else %}
       {# Выводится, если список 'checks' пуст #}
       <tr>
-        <td colspan="6">Проверок еще не было</td>
+        <td colspan="6">Проверок еще не было</td> {# Убедимся, что colspan=6 #}
       </tr>
       {% endfor %}
     </tbody>
