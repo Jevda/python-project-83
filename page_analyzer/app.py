@@ -6,11 +6,10 @@ import requests
 from bs4 import BeautifulSoup
 from flask import (Flask, render_template, url_for, request,
                    flash, redirect, get_flashed_messages, abort)
-# psycopg2 и DictCursor здесь больше не импортируются
+import psycopg2
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
-# Импорт функций работы с БД из db.py
 from .db import (get_all_urls, get_url_by_name, insert_url,
                    get_url_by_id, insert_url_check, get_url_checks)
 
@@ -30,11 +29,13 @@ def index():
     if request.method == 'POST':
         if not validators.url(url_input):
             flash('Некорректный URL', 'danger')
-            return redirect(url_for('list_urls', validation_error='true'))
+            # Упрощенный редирект
+            return redirect(url_for('list_urls'))
 
         if len(url_input) > 255:
             flash('URL превышает 255 символов', 'danger')
-            return redirect(url_for('list_urls', validation_error='true'))
+            # Упрощенный редирект
+            return redirect(url_for('list_urls'))
 
         parsed_url = urlparse(url_input)
         normalized_url = f"{parsed_url.scheme}://{parsed_url.netloc}".lower()
@@ -49,21 +50,22 @@ def index():
                 return redirect(url_for('show_url', id=new_url[0]))
             else:
                 flash('Произошла ошибка при добавлении URL', 'danger')
-                return redirect(url_for('list_urls', validation_error='true')) # Редирект при ошибке
+                # Упрощенный редирект при ошибке добавления
+                return redirect(url_for('list_urls'))
 
     # GET запрос
     messages = get_flashed_messages(with_categories=True)
     return render_template('index.html', url_input='', messages=messages)
 
 
-# Страница списка сайтов
+# Страница списка сайтов (возвращаем к нормальному виду)
 @app.route('/urls')
 def list_urls():
-    is_validation_error = request.args.get('validation_error')
-    status_code = 422 if is_validation_error else 200
+    # Убрали проверку validation_error и принудительный статус 422
     all_urls = get_all_urls()
     messages = get_flashed_messages(with_categories=True)
-    return render_template('urls_index.html', urls=all_urls, messages=messages), status_code
+    # Возвращаем статус 200 OK по умолчанию
+    return render_template('urls_index.html', urls=all_urls, messages=messages)
 
 
 # Страница конкретного URL
