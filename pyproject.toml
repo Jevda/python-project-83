@@ -16,8 +16,9 @@ dependencies = [
     "flask>=3.1.0",
     "gunicorn>=23.0.0",
     "python-dotenv>=1.1.0",
-    "psycopg[binary]", # Используется приложением (v3)
-    "validators",      # Библиотека для валидации URL
+    # "psycopg[binary]", # Убрали psycopg v3
+    "psycopg2-binary", # Добавили psycopg2 v2 как основную зависимость
+    "validators",
     "requests>=2.32.3",
     "beautifulsoup4>=4.13.4",
     "lxml>=5.4.0",
@@ -26,13 +27,11 @@ dependencies = [
 [project.optional-dependencies]
 # Зависимости для разработки
 dev = [
-    "ruff",            # Линтер
-    "psycopg2-binary", # Добавлено сюда для тестов Hexlet (v2)
+    "ruff",
+    # "psycopg2-binary", # Убрали отсюда, т.к. теперь в dependencies
 ]
 
 # Настройка setuptools для явного указания пакетов
 [tool.setuptools.packages.find]
 include = ["page_analyzer*"] # Включаем только пакет page_analyzer
 exclude = ["tests*"]          # Исключаем тесты
-
-# Секция [dependency-groups] УДАЛЕНА, так как она нестандартная

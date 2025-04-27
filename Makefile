@@ -4,9 +4,9 @@
 PORT ?= 8000
 
 # Установка/синхронизация всех зависимостей (основных и dev)
-# Добавили --reinstall для попытки решения проблемы в CI Hexlet
+# Вернули команду к исходному виду
 install:
-	uv sync --reinstall --all-extras
+	uv sync --all-extras
 
 # Запуск сервера для разработки Flask
 dev:
