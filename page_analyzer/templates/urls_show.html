@@ -8,8 +8,8 @@
 {% block content %}
   {# Информация о сайте #}
   <div class="table-responsive" data-test="url">
-    <h2 class="mt-5 mb-3">Сайт: {{ url[1] }}</h2> {# Добавил отступы к заголовку #}
-    <table class="table table-bordered table-hover"> {# Убрал mt-3, т.к. есть у h2 #}
+    <h2 class="mt-5 mb-3">Сайт: {{ url[1] }}</h2>
+    <table class="table table-bordered table-hover">
         <tbody>
             <tr>
                 <td>ID</td>
@@ -28,7 +28,7 @@
   </div>
 
   {# Форма для запуска проверки #}
-  <h2 class="mt-5 mb-3">Проверки</h2> {# Добавил отступы к заголовку #}
+  <h2 class="mt-5 mb-3">Проверки</h2>
   <form method="post" action="{{ url_for('add_url_check', id=url[0]) }}">
       <input type="submit" class="btn btn-primary" value="Запустить проверку">
   </form>
@@ -38,7 +38,7 @@
     <thead>
       <tr>
         <th>ID</th>
-        <th>Код ответа</th> {# Заголовок уже есть #}
+        <th>Код ответа</th>
         <th>h1</th>
         <th>title</th>
         <th>description</th>
@@ -50,16 +50,17 @@
       {% for check in checks %}
       <tr>
         <td>{{ check[0] }}</td> {# ID проверки #}
-        <td>{{ check[2] or '' }}</td> {# status_code (индекс 2), выводим '' если NULL #}
+        <td>{{ check[2] or '' }}</td> {# status_code (индекс 2) #}
+        {# Отображаем извлеченные SEO-данные, если они есть #}
         <td>{{ check[3] or '' }}</td> {# h1 (индекс 3) #}
         <td>{{ check[4] or '' }}</td> {# title (индекс 4) #}
         <td>{{ check[5] or '' }}</td> {# description (индекс 5) #}
-        <td>{{ check[6].strftime('%Y-%m-%d %H:%M:%S') }}</td> {# created_at (индекс 6), форматируем #}
+        <td>{{ check[6].strftime('%Y-%m-%d %H:%M:%S') }}</td> {# created_at (индекс 6) #}
       </tr>
       {% else %}
       {# Выводится, если список 'checks' пуст #}
       <tr>
-        <td colspan="6">Проверок еще не было</td> {# Убедимся, что colspan=6 #}
+        <td colspan="6">Проверок еще не было</td>
       </tr>
       {% endfor %}
     </tbody>

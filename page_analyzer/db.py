@@ -68,14 +68,12 @@ def insert_url(url_name):
     return new_url_data
 
 
-# === ИЗМЕНЕННАЯ ФУНКЦИЯ ===
 def get_all_urls():
     """Получает все URL вместе с датой и кодом ответа последней проверки."""
     conn = get_db_connection()
     urls_list = []
     try:
         with conn.cursor() as cur:
-            # Используем CTE и ROW_NUMBER для выбора последней проверки для каждого URL
             cur.execute(
                 """
                 WITH LatestChecks AS (
@@ -96,28 +94,28 @@ def get_all_urls():
                 ORDER BY u.id DESC;
                 """
             )
-            # Результат теперь содержит (id, name, last_check_date, last_check_status_code)
-            # Поля _date и _status_code будут None, если проверок еще не было
             urls_list = cur.fetchall()
     finally:
         if conn:
             conn.close()
     return urls_list
-# === КОНЕЦ ИЗМЕНЕННОЙ ФУНКЦИИ ===
 
 
 # === ИЗМЕНЕННАЯ ФУНКЦИЯ ===
-def insert_url_check(url_id, status_code):
-    """Добавляет запись о новой проверке с указанием status_code."""
+def insert_url_check(url_id, status_code, h1=None, title=None, description=None):
+    """Добавляет запись о новой проверке со всеми данными."""
     conn = get_db_connection()
     success = False
     # now = datetime.now() # Используем DEFAULT CURRENT_TIMESTAMP
     try:
         with conn.cursor() as cur:
-            # Вставляем url_id и status_code, created_at установится по DEFAULT
+            # Вставляем все полученные данные
             cur.execute(
-                "INSERT INTO url_checks (url_id, status_code) VALUES (%s, %s)",
-                (url_id, status_code)
+                """
+                INSERT INTO url_checks (url_id, status_code, h1, title, description)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (url_id, status_code, h1, title, description)
             )
             conn.commit()
             success = True
