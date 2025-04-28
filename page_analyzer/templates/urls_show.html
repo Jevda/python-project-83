@@ -11,7 +11,6 @@
     <h2 class="mt-5 mb-3">Сайт: {{ url[1] }}</h2>
     <table class="table table-bordered table-hover">
         <tbody>
-            {# --- Начало исправлений --- #}
             <tr>
                 <th scope="row">ID</th> {# Заменили td на th scope="row" #}
                 <td>{{ url[0] }}</td>
@@ -24,7 +23,6 @@
                 <th scope="row">Дата создания</th> {# Заменили td на th scope="row" #}
                 <td>{{ url[2].strftime('%Y-%m-%d') }}</td>
             </tr>
-            {# --- Конец исправлений --- #}
         </tbody>
     </table>
   </div>
