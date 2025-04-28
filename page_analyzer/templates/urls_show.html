@@ -1,41 +1,35 @@
 {% extends "layout.html" %}
 
-{# Переменная 'url' содержит (id, name, created_at) #}
-{# Переменная 'checks' содержит список проверок [(id, url_id, status_code, h1, title, description, created_at), ...] #}
-
 {% block title %}Сайт: {{ url[1] }}{% endblock %}
 
 {% block content %}
-  {# Информация о сайте #}
   <div class="table-responsive" data-test="url">
     <h2 class="mt-5 mb-3">Сайт: {{ url[1] }}</h2>
     <table class="table table-bordered table-hover">
         <tbody>
             <tr>
-                <th scope="row">ID</th> {# Заменили td на th scope="row" #}
+                <th scope="row">ID</th>
                 <td>{{ url[0] }}</td>
             </tr>
             <tr>
-                <th scope="row">Имя</th> {# Заменили td на th scope="row" #}
+                <th scope="row">Имя</th>
                 <td>{{ url[1] }}</td>
             </tr>
             <tr>
-                <th scope="row">Дата создания</th> {# Заменили td на th scope="row" #}
+                <th scope="row">Дата создания</th>
                 <td>{{ url[2].strftime('%Y-%m-%d') }}</td>
             </tr>
         </tbody>
     </table>
   </div>
 
-  {# Форма для запуска проверки #}
   <h2 class="mt-5 mb-3">Проверки</h2>
   <form method="post" action="{{ url_for('add_url_check', id=url[0]) }}">
       <input type="submit" class="btn btn-primary" value="Запустить проверку">
   </form>
 
-  {# Таблица с историей проверок #}
   <table class="table table-bordered table-hover mt-3" data-test="checks">
-    <thead> {# <-- У этой таблицы заголовки были правильные (th в thead) #}
+    <thead>
       <tr>
         <th>ID</th>
         <th>Код ответа</th>
@@ -48,12 +42,12 @@
     <tbody>
       {% for check in checks %}
       <tr>
-        <td>{{ check[0] }}</td>
-        <td>{{ check[2] or '' }}</td>
-        <td>{{ check[3] or '' }}</td>
-        <td>{{ check[4] or '' }}</td>
-        <td>{{ check[5] or '' }}</td>
-        <td>{{ check[6].strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        <td>{{ check[0] }}</td> {# ID проверки #}
+        <td>{{ check[2] or '' }}</td> {# status_code #}
+        <td>{{ check[3] or '' }}</td> {# h1 #}
+        <td>{{ check[4] or '' }}</td> {# title #}
+        <td>{{ check[5] or '' }}</td> {# description #}
+        <td>{{ check[6].strftime('%Y-%m-%d %H:%M:%S') }}</td> {# created_at #}
       </tr>
       {% else %}
       <tr>

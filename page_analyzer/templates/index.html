@@ -3,16 +3,12 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-  {# Блок для flash-сообщений уже есть в layout.html, здесь он не нужен #}
-  {# {% include "includes/flash.html" %} <--- УДАЛЕНО #}
-
   <div class="p-5 mb-4 bg-light border rounded-3">
     <div class="container-fluid py-5">
       <h1 class="display-4">Анализатор страниц</h1>
       <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
       <hr class="my-4">
 
-      {# action указывает на маршрут add_url #}
       <form method="post" action="{{ url_for('add_url') }}" class="row gx-3 gy-2 align-items-center">
           <div class="col">
              <input type="text" name="url" value="{{ url_input or '' }}" class="form-control form-control-lg" placeholder="https://www.example.com" required>
@@ -21,11 +17,7 @@
              <input type="submit" class="btn btn-primary btn-lg px-4" value="Проверить">
           </div>
       </form>
-      {# Пример вывода ошибки под полем
-         {% if error %}
-           <div class="text-danger mt-2">{{ error }}</div>
-         {% endif %}
-      #}
+
     </div>
   </div>
 {% endblock %}

@@ -4,9 +4,10 @@ import os
 import validators
 import requests
 from bs4 import BeautifulSoup
+# Убрали 'session' из импорта flask
 from flask import (Flask, render_template, url_for, request,
-                   flash, redirect, get_flashed_messages, abort, session) # session больше не нужен для хака
-import psycopg2
+                   flash, redirect, get_flashed_messages, abort)
+# import psycopg2 # <-- УДАЛЕНО
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
@@ -23,72 +24,56 @@ if not app.config['SECRET_KEY']:
     raise RuntimeError("SECRET_KEY not set in .env file!")
 
 
-# --- Маршрут для главной страницы (только GET) ---
+# Главная страница
 @app.route('/')
 def index():
     """Отображает главную страницу с формой добавления URL."""
-    # Просто отображаем шаблон. Передаем пустой url_input и сообщения (если есть)
     messages = get_flashed_messages(with_categories=True)
     return render_template('index.html', url_input='', messages=messages)
 
 
-# --- Маршрут для списка сайтов (GET) ---
+# Маршрут для добавления URL (только POST)
+@app.route('/urls', methods=['POST'])
+def add_url():
+    """Обрабатывает форму добавления нового URL."""
+    url_input = request.form.get('url', '')
+    error = validate_url(url_input)
+    if error:
+        flash(error, 'danger')
+        messages = get_flashed_messages(with_categories=True)
+        # Возвращаем шаблон с ошибкой и статусом 422
+        return render_template(
+            'index.html', url_input=url_input, messages=messages
+        ), 422
+
+    normalized_url = normalize_url(url_input)
+    existing_url = get_url_by_name(normalized_url)
+    if existing_url:
+        flash('Страница уже существует', 'info')
+        return redirect(url_for('show_url', id=existing_url[0]))
+    else:
+        new_url = insert_url(normalized_url)
+        if new_url:
+            flash('Страница успешно добавлена', 'success')
+            return redirect(url_for('show_url', id=new_url[0]))
+        else:
+            flash('Произошла ошибка при добавлении URL', 'danger')
+            messages = get_flashed_messages(with_categories=True)
+            return render_template(
+                'index.html', url_input=url_input, messages=messages
+            ), 500
+
+
+# Страница списка сайтов
 @app.route('/urls')
 def list_urls():
     """Отображает список всех добавленных URL."""
     all_urls = get_all_urls()
     messages = get_flashed_messages(with_categories=True)
-    # Всегда возвращаем 200 OK
     return render_template('urls_index.html', urls=all_urls, messages=messages)
 
 
-# === НОВЫЙ Маршрут для ДОБАВЛЕНИЯ URL (только POST) ===
-@app.route('/urls', methods=['POST'])
-def add_url():
-    """Обрабатывает форму добавления нового URL."""
-    url_input = request.form.get('url', '')
-    messages = get_flashed_messages(with_categories=True) # Получаем сразу, чтобы передать при ошибке
-
-    # Валидация
-    if not validators.url(url_input):
-        flash('Некорректный URL', 'danger')
-        # Перерисовываем главную страницу с ошибкой и введенным URL
-        return render_template(
-            'index.html', url_input=url_input, messages=get_flashed_messages(with_categories=True)
-        ), 422 # Статус 422
-
-    if len(url_input) > 255:
-        flash('URL превышает 255 символов', 'danger')
-        # Перерисовываем главную страницу с ошибкой и введенным URL
-        return render_template(
-            'index.html', url_input=url_input, messages=get_flashed_messages(with_categories=True)
-        ), 422 # Статус 422
-
-    # Нормализация
-    parsed_url = urlparse(url_input)
-    normalized_url = f"{parsed_url.scheme}://{parsed_url.netloc}".lower()
-
-    # Проверка на дубликат
-    existing_url = get_url_by_name(normalized_url)
-    if existing_url:
-        flash('Страница уже существует', 'info')
-        return redirect(url_for('show_url', id=existing_url[0])) # Редирект на существующую
-
-    # Вставка нового URL
-    new_url = insert_url(normalized_url)
-    if new_url:
-        flash('Страница успешно добавлена', 'success')
-        return redirect(url_for('show_url', id=new_url[0])) # Редирект на новую
-    else:
-        # Обработка редкой ошибки вставки
-        flash('Произошла ошибка при добавлении URL', 'danger')
-        # Перерисовываем главную страницу
-        return render_template(
-            'index.html', url_input=url_input, messages=get_flashed_messages(with_categories=True)
-        ), 500 # Статус 500
-
-
-# --- Маршрут для страницы конкретного URL (GET) ---
+# Страница конкретного URL
 @app.route('/urls/<int:id>')
 def show_url(id):
     """Отображает информацию о URL и историю его проверок."""
@@ -105,38 +90,65 @@ def show_url(id):
     )
 
 
-# --- Маршрут для запуска проверки (POST) ---
+# Маршрут для запуска проверки
 @app.route('/urls/<int:id>/checks', methods=['POST'])
 def add_url_check(id):
     """Выполняет проверку URL, парсит HTML и сохраняет результаты."""
     url_item = get_url_by_id(id)
     if url_item is None:
-        # Не даем добавить проверку для несуществующего URL
         flash('Невозможно добавить проверку: URL не найден.', 'danger')
-        return redirect(url_for('list_urls')) # Редирект на список URL
+        return redirect(url_for('list_urls'))
 
     url_name = url_item[1]
     try:
         response = requests.get(url_name, timeout=10)
-        response.raise_for_status() # Проверка на ошибки 4xx/5xx
+        response.raise_for_status()
         status_code = response.status_code
-        soup = BeautifulSoup(response.text, 'lxml')
-        # Извлечение SEO данных
-        h1_tag = soup.find('h1')
-        h1_text = (h1_tag.string.strip()
-                   if h1_tag and h1_tag.string else None)
-        title_tag = soup.find('title')
-        title_text = (title_tag.string.strip()
-                      if title_tag and title_tag.string else None)
-        desc_meta = soup.find('meta', attrs={'name': 'description'})
-        desc_content = (desc_meta.get('content').strip()
-                        if desc_meta and desc_meta.get('content') else None)
-
-        insert_url_check(id, status_code, h1_text, title_text, desc_content)
+        seo_data = parse_seo_data(response.text)
+        insert_url_check(
+            id,
+            status_code,
+            seo_data['h1'],
+            seo_data['title'],
+            seo_data['description']
+        )
         flash('Страница успешно проверена', 'success')
     except requests.exceptions.RequestException as e:
         print(f"Ошибка при проверке URL {url_name}: {e}")
         flash('Произошла ошибка при проверке', 'danger')
 
-    # Всегда редирект обратно на страницу URL
     return redirect(url_for('show_url', id=id))
+
+
+# --- Вспомогательные функции ---
+def validate_url(url_string):
+    """Проверяет URL на корректность и длину."""
+    if not url_string:
+        return 'URL обязателен'
+    if len(url_string) > 255:
+        return 'URL превышает 255 символов'
+    if not validators.url(url_string):
+        return 'Некорректный URL'
+    return None
+
+
+def normalize_url(url_string):
+    """Нормализует URL (схема + домен, нижний регистр)."""
+    parsed_url = urlparse(url_string)
+    return f"{parsed_url.scheme}://{parsed_url.netloc}".lower()
+
+
+def parse_seo_data(html_text):
+    """Парсит HTML-текст и извлекает h1, title и description."""
+    soup = BeautifulSoup(html_text, 'lxml')
+    h1_tag = soup.find('h1')
+    h1 = (h1_tag.string.strip()
+          if h1_tag and h1_tag.string else '')
+    title_tag = soup.find('title')
+    title = (title_tag.string.strip()
+             if title_tag and title_tag.string else '')
+    desc_meta = soup.find('meta', attrs={'name': 'description'})
+    description = (desc_meta.get('content', '').strip()
+                   if desc_meta else '')
+    return {'h1': h1, 'title': title, 'description': description}
+# --- Конец вспомогательных функций ---

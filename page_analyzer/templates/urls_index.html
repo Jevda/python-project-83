@@ -11,31 +11,28 @@
         <th>ID</th>
         <th>Имя</th>
         <th>Последняя проверка</th>
-        <th>Код ответа</th> {# Новый заголовок #}
+        <th>Код ответа</th>
       </tr>
     </thead>
     <tbody>
-      {# url_item теперь кортеж (id, name, last_check_date, last_check_status_code) #}
       {% for url_item in urls %}
       <tr>
         <td>{{ url_item[0] }}</td> {# ID #}
         <td><a href="{{ url_for('show_url', id=url_item[0]) }}">{{ url_item[1] }}</a></td> {# Имя #}
         <td>
-            {# Выводим дату последней проверки, если она есть #}
             {% if url_item[2] %}
               {{ url_item[2].strftime('%Y-%m-%d') }} {# last_check_date #}
             {% endif %}
         </td>
         <td>
-            {# Выводим код ответа последней проверки, если он есть #}
-            {% if url_item[3] is not none %} {# Проверяем, что значение не NULL #}
+            {% if url_item[3] is not none %}
               {{ url_item[3] }} {# last_check_status_code #}
             {% endif %}
         </td>
       </tr>
       {% else %}
       <tr>
-        <td colspan="4">Пока не добавлено ни одного сайта</td> {# Увеличили colspan до 4 #}
+        <td colspan="4">Пока не добавлено ни одного сайта</td>
       </tr>
       {% endfor %}
     </tbody>
